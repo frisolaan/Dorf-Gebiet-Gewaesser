@@ -212,8 +212,31 @@ window.copyLink = (btn, enc) => {
   navigator.clipboard?.writeText(url).then(() => { btn.textContent = '✓ Kopiert'; setTimeout(() => btn.textContent = 'Kopieren', 1400); });
 };
 async function hostStart() {
-  await api('start', { roomId: ROOM, hostKey: HOSTKEY });
+  await api('start', { roomId: ROOM });
   poll();
+}
+// Schiedsrichter-Aktionen – von jedem Bildschirm aus.
+window.judge = async (decision) => { await api('judge', { roomId: ROOM, decision }); poll(); };
+window.nextRound = async () => { await api('start', { roomId: ROOM }); poll(); };
+
+// Gemeinsame Reveal-Ansicht (Host + Spieler): Gewinner, Wort, Schiedsrichter-Knöpfe.
+function revealStageHTML(room, topLine) {
+  const awarded = !!room.awarded;
+  const status = awarded
+    ? '<span style="color:var(--accent2)">Punkt vergeben ✓</span>'
+    : '<span style="color:var(--muted)">Punkt noch offen</span>';
+  const judgeBtn = awarded
+    ? `<button class="ghost" type="button" onclick="judge('revoke')">↩︎ Zurücknehmen</button>`
+    : `<button class="teal" type="button" onclick="judge('award')">✓ Punkt geben</button>`;
+  return `<div class="kick">${topLine || 'Erste Antwort von'}</div>
+    <div class="cat" style="color:var(--accent2)">${esc(room.winnerName)}</div>
+    <div class="winword">«${esc(room.winnerWord)}»</div>
+    <div class="countdown">${status}</div>
+    <div class="row" style="margin-top:14px;justify-content:center;gap:10px">
+      ${judgeBtn}
+      <button type="button" onclick="nextRound()">Nächste Runde →</button>
+    </div>
+    <p class="muted small" style="margin-top:8px">Schiedsrichter: Punkt geben oder verwerfen, dann weiter.</p>`;
 }
 function renderHostStage(room, now) {
   const s = $('hostStage');
@@ -227,11 +250,7 @@ function renderHostStage(room, now) {
       <div class="big-letter">${esc(room.letter)}</div>
       <p class="muted small">Wer zuerst tippt, gewinnt …</p>`;
   } else if (room.phase === 'reveal') {
-    const left = Math.max(0, Math.ceil((room.revealUntil - now) / 1000));
-    s.innerHTML = `<div class="kick">Punkt für</div>
-      <div class="cat" style="color:var(--accent2)">${esc(room.winnerName)}</div>
-      <div class="winword">«${esc(room.winnerWord)}»</div>
-      <div class="countdown">Nächste Runde in ${left}s</div>`;
+    s.innerHTML = revealStageHTML(room);
   } else if (room.phase === 'finished') {
     const w = [...room.players].sort((a, b) => b.score - a.score)[0];
     s.innerHTML = `<div class="kick">Sieg</div>
@@ -289,12 +308,8 @@ function renderPlayStage(room, now) {
       setTimeout(() => inp.focus(), 30);
     }
   } else if (room.phase === 'reveal') {
-    const left = Math.max(0, Math.ceil((room.revealUntil - now) / 1000));
     const mine = room.winnerId === PID;
-    s.innerHTML = `<div class="kick">${mine ? 'Dein Punkt!' : 'Punkt für'}</div>
-      <div class="cat" style="color:var(--accent2)">${esc(room.winnerName)}</div>
-      <div class="winword">«${esc(room.winnerWord)}»</div>
-      <div class="countdown">Nächste Runde in ${left}s</div>`;
+    s.innerHTML = revealStageHTML(room, mine ? 'Deine Antwort' : 'Erste Antwort von');
   } else if (room.phase === 'finished') {
     const w = [...room.players].sort((a, b) => b.score - a.score)[0];
     const mine = w.id === PID;
@@ -310,13 +325,22 @@ async function poll() {
   clearTimeout(pollTimer);
   let interval = 950;
   try {
-    const { room, now } = await api('state?roomId=' + ROOM);
+    const resp = await api('state?roomId=' + ROOM);
+    const { room, now } = resp;
+    if (!room || resp.error) {
+      // Raum nicht gefunden -> meist fehlt Upstash (state findet den Raum nicht).
+      const stage = HOSTKEY ? $('hostStage') : $('playStage');
+      if (stage) stage.innerHTML =
+        '<div class="cat" style="color:var(--accent)">Raum weg</div>' +
+        '<p class="muted small" style="line-height:1.5">Der Raum <b>' + esc(ROOM) +
+        '</b> wird nicht gefunden. Auf Vercel heisst das fast immer: <b>Upstash Redis ist nicht verbunden</b> ' +
+        '(ENV-Variablen fehlen) oder es wurde danach nicht neu deployt. Siehe README.</p>' +
+        '<button class="ghost" type="button" onclick="location.href=baseUrl">Neues Spiel</button>';
+      pollTimer = setTimeout(poll, 2500);
+      return;
+    }
     if (room && !room.error) {
       const target = room.target;
-      // Auto-Advance: jeder Client darf nach Reveal-Ende anstossen (serverseitig idempotent)
-      if (room.phase === 'reveal' && room.revealUntil && now >= room.revealUntil) {
-        api('start', { roomId: ROOM, auto: true });
-      }
       if (HOSTKEY) {
         $('hostTarget').textContent = 'bis ' + target;
         renderScores($('hostScores'), room.players);
