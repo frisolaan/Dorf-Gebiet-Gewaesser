@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Stadt · Land · Vollpfosten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#181613; --paper:#fbf9f4; --card:#ffffff; --accent:#E8442A; --accent2:#1F6F6B;
+    --gold:#caa43a; --line:#e3ded3; --line2:#cfccc4; --tint:#FBF4E9; --muted:#6b675f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-text-size-adjust:100%}
+  body{min-height:100dvh;display:flex;flex-direction:column;align-items:center}
+  .wrap{width:100%;max-width:720px;padding:20px 18px 40px}
+  h1.logo{font-family:'Anton';font-weight:400;text-transform:uppercase;line-height:.9;margin:0;letter-spacing:.5px}
+  .logo .a{color:var(--accent)}
+  .kick{font-weight:800;letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:var(--accent);margin-bottom:6px}
+  .card{background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:18px;margin-top:16px;box-shadow:4px 4px 0 var(--ink)}
+  label{display:block;font-weight:800;font-size:13px;margin:12px 0 5px}
+  input[type=text],input[type=number]{width:100%;font-family:inherit;font-size:17px;padding:12px 13px;border:2px solid var(--line2);border-radius:10px;background:#fff;color:var(--ink)}
+  input:focus{outline:none;border-color:var(--accent)}
+  button{font-family:inherit;font-weight:800;cursor:pointer;border:2px solid var(--ink);border-radius:10px;background:var(--accent);color:#fff;font-size:16px;padding:13px 18px;box-shadow:3px 3px 0 var(--ink);transition:transform .05s}
+  button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+  button.ghost{background:#fff;color:var(--ink)}
+  button.teal{background:var(--accent2)}
+  button:disabled{opacity:.45;cursor:not-allowed;box-shadow:3px 3px 0 var(--ink)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+  .big-letter{font-family:'Anton';font-size:clamp(90px,30vw,200px);line-height:.9;color:var(--accent);text-align:center}
+  .cat{font-family:'Anton';font-size:clamp(26px,7vw,44px);text-transform:uppercase;text-align:center;line-height:1;letter-spacing:.5px}
+  .center{text-align:center}
+  .scorebar{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .srow{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--line2);border-radius:10px;padding:9px 12px}
+  .srow.lead{border-color:var(--accent);background:var(--tint)}
+  .srow .nm{font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .srow .pts{font-family:'Anton';font-size:22px;min-width:34px;text-align:right}
+  .pill{display:inline-block;font-family:'Anton';font-size:13px;color:#fff;background:var(--ink);padding:3px 10px;border-radius:20px;letter-spacing:1px}
+  .joinlist{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+  .join{display:flex;gap:10px;align-items:center;background:var(--tint);border:2px solid var(--line2);border-radius:10px;padding:10px}
+  .join .qr{width:64px;height:64px;border-radius:6px;background:#fff;border:1px solid var(--line2);flex:none}
+  .join .ji{flex:1;min-width:0}
+  .join .ji b{display:block}
+  .join .ji .lnk{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .join button{padding:8px 12px;font-size:13px;box-shadow:2px 2px 0 var(--ink)}
+  .flash{padding:14px;border-radius:12px;border:2px solid var(--ink);font-weight:800;text-align:center;margin-top:14px}
+  .flash.win{background:var(--accent2);color:#fff}
+  .flash.bad{background:#fff;color:var(--accent)}
+  .flash.late{background:#f0eee8}
+  .countdown{font-family:'Anton';font-size:14px;color:var(--muted);text-align:center;margin-top:8px}
+  .hide{display:none}
+  .err{color:var(--accent);font-weight:800;font-size:14px;margin-top:8px}
+  a.link{color:var(--accent2);font-weight:800}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-end;width:100%;max-width:720px;padding:14px 18px 0}
+  .code{font-family:'Anton';font-size:22px;letter-spacing:3px}
+  .winword{font-family:'Anton';font-size:clamp(28px,8vw,48px);text-transform:uppercase}
+  .footnote{font-size:11px;color:var(--muted);margin-top:24px;text-align:center}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <div class="kick">Stadt · Land</div>
+    <h1 class="logo" style="font-size:30px"><span class="a">Vollpfosten</span></h1>
+  </div>
+  <div id="codeBadge" class="code muted hide"></div>
+</div>
+
+<div class="wrap">
+  <!-- ===================== CREATE ===================== -->
+  <div id="viewCreate">
+    <div class="card">
+      <label>Wer spielt mit? <span class="muted small">(2–8 Namen)</span></label>
+      <div id="nameInputs"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost" id="addName" type="button">+ Name</button>
+      </div>
+      <label style="margin-top:16px">Punkte zum Sieg</label>
+      <input type="number" id="target" value="7" min="3" max="20" style="max-width:120px" />
+      <div class="row" style="margin-top:18px">
+        <button id="createBtn" type="button">Spiel erstellen →</button>
+      </div>
+      <div id="createErr" class="err hide"></div>
+    </div>
+    <div class="card">
+      <b>So läufts</b>
+      <p class="small muted" style="line-height:1.5;margin:8px 0 0">
+        Du gibst die Namen ein und kriegst pro Person einen Link. Jede:r öffnet
+        den eigenen Link auf dem eigenen Laptop. Pro Runde erscheinen bei allen
+        gleichzeitig <b>Kategorie + Buchstabe</b>. Wer als Erstes ein Wort mit dem
+        richtigen Anfangsbuchstaben abschickt, kriegt den Punkt. Erster auf der
+        Zielpunktzahl gewinnt. <b>Diese Host-Seite offen lassen</b> – sie steuert die Runden.
+      </p>
+    </div>
+  </div>
+
+  <!-- ===================== HOST ===================== -->
+  <div id="viewHost" class="hide">
+    <div class="card center" id="hostStage"></div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <b>Punktestand</b><span class="pill" id="hostTarget"></span>
+      </div>
+      <div class="scorebar" id="hostScores"></div>
+    </div>
+    <div class="card" id="hostJoinCard">
+      <b>Links zum Verteilen</b>
+      <div class="small muted">Code: <span id="joinCode" class="code"></span></div>
+      <div class="joinlist" id="joinList"></div>
+    </div>
+  </div>
+
+  <!-- ===================== PLAYER ===================== -->
+  <div id="viewPlayer" class="hide">
+    <div class="card center" id="playStage"></div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <b>Punktestand</b><span class="pill" id="playTarget"></span>
+      </div>
+      <div class="scorebar" id="playScores"></div>
+    </div>
+  </div>
+
+  <div class="footnote">Stadt · Land · Vollpfosten — kontrolliert wird nur der Anfangsbuchstabe. Den Rest entscheidet der Tisch.</div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = (path, body) => fetch('/api/' + path, {
+  method: body ? 'POST' : 'GET',
+  headers: { 'Content-Type': 'application/json' },
+  body: body ? JSON.stringify(body) : undefined,
+}).then(r => r.json());
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const params = new URLSearchParams(location.search);
+const ROOM = params.get('room');
+const HOSTKEY = params.get('host');
+const PID = params.get('p');
+const baseUrl = location.origin + location.pathname;
+
+let lastPhase = null, lastRound = -1, mySubmitted = false, pollTimer = null;
+
+/* ---------------- CREATE ---------------- */
+function buildNameInputs(n = 5) {
+  const box = $('nameInputs'); box.innerHTML = '';
+  for (let i = 0; i < n; i++) addNameRow(box, i);
+}
+function addNameRow(box, i) {
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.placeholder = 'Spieler:in ' + (box.children.length + 1);
+  inp.className = 'nameInput'; inp.style.marginTop = '8px';
+  box.appendChild(inp);
+}
+$('addName')?.addEventListener('click', () => {
+  const box = $('nameInputs');
+  if (box.children.length < 8) addNameRow(box);
+});
+$('createBtn')?.addEventListener('click', async () => {
+  const names = [...document.querySelectorAll('.nameInput')].map(i => i.value.trim()).filter(Boolean);
+  const target = parseInt($('target').value, 10) || 7;
+  const err = $('createErr');
+  if (names.length < 2) { err.textContent = 'Mindestens 2 Namen eingeben.'; err.classList.remove('hide'); return; }
+  err.classList.add('hide');
+  $('createBtn').disabled = true; $('createBtn').textContent = 'Erstelle …';
+  try {
+    const r = await api('create', { names, target });
+    if (r.error) throw new Error(r.error);
+    // Host-Seite oeffnen
+    location.href = baseUrl + '?room=' + r.roomId + '&host=' + r.hostKey;
+  } catch (e) {
+    err.textContent = e.message || 'Fehler.'; err.classList.remove('hide');
+    $('createBtn').disabled = false; $('createBtn').textContent = 'Spiel erstellen →';
+  }
+});
+
+/* ---------------- shared scoreboard ---------------- */
+function renderScores(el, players) {
+  const sorted = [...players].sort((a, b) => b.score - a.score);
+  const top = sorted[0]?.score || 0;
+  el.innerHTML = sorted.map(p =>
+    `<div class="srow ${p.score === top && top > 0 ? 'lead' : ''}">
+       <div class="nm">${esc(p.name)}</div><div class="pts">${p.score}</div></div>`
+  ).join('');
+}
+
+/* ---------------- HOST ---------------- */
+function showHost() {
+  $('viewCreate').classList.add('hide');
+  $('viewHost').classList.remove('hide');
+  $('codeBadge').classList.remove('hide'); $('codeBadge').textContent = ROOM;
+  poll();
+}
+function buildJoinLinks(players) {
+  $('joinCode').textContent = ROOM;
+  $('joinList').innerHTML = players.map(p => {
+    const url = baseUrl + '?room=' + ROOM + '&p=' + p.id + '&name=' + encodeURIComponent(p.name);
+    const qr = 'https://api.qrserver.com/v1/create-qr-code/?size=128x128&margin=0&data=' + encodeURIComponent(url);
+    return `<div class="join">
+      <img class="qr" src="${qr}" alt="QR ${esc(p.name)}"/>
+      <div class="ji"><b>${esc(p.name)}</b><div class="lnk">${esc(url)}</div></div>
+      <button class="ghost" type="button" onclick="copyLink(this,'${encodeURIComponent(url)}')">Kopieren</button>
+    </div>`;
+  }).join('');
+}
+window.copyLink = (btn, enc) => {
+  const url = decodeURIComponent(enc);
+  navigator.clipboard?.writeText(url).then(() => { btn.textContent = '✓ Kopiert'; setTimeout(() => btn.textContent = 'Kopieren', 1400); });
+};
+async function hostStart() {
+  await api('start', { roomId: ROOM, hostKey: HOSTKEY });
+  poll();
+}
+function renderHostStage(room, now) {
+  const s = $('hostStage');
+  if (room.phase === 'lobby') {
+    s.innerHTML = `<div class="cat">Bereit?</div>
+      <p class="muted small">Verteile die Links unten. Wenn alle drin sind:</p>
+      <button type="button" onclick="hostStart()">Spiel starten ▶</button>`;
+  } else if (room.phase === 'round') {
+    s.innerHTML = `<div class="kick">Runde ${room.round} · Kategorie</div>
+      <div class="cat">${esc(room.category)}</div>
+      <div class="big-letter">${esc(room.letter)}</div>
+      <p class="muted small">Wer zuerst tippt, gewinnt …</p>`;
+  } else if (room.phase === 'reveal') {
+    const left = Math.max(0, Math.ceil((room.revealUntil - now) / 1000));
+    s.innerHTML = `<div class="kick">Punkt für</div>
+      <div class="cat" style="color:var(--accent2)">${esc(room.winnerName)}</div>
+      <div class="winword">«${esc(room.winnerWord)}»</div>
+      <div class="countdown">Nächste Runde in ${left}s</div>`;
+  } else if (room.phase === 'finished') {
+    const w = [...room.players].sort((a, b) => b.score - a.score)[0];
+    s.innerHTML = `<div class="kick">Sieg</div>
+      <div class="big-letter" style="font-size:70px">🏆</div>
+      <div class="cat" style="color:var(--accent)">${esc(w.name)}</div>
+      <p class="muted">${w.score} Punkte</p>
+      <button class="ghost" type="button" onclick="location.href=baseUrl">Neues Spiel</button>`;
+  }
+}
+
+/* ---------------- PLAYER ---------------- */
+function showPlayer() {
+  $('viewCreate').classList.add('hide');
+  $('viewPlayer').classList.remove('hide');
+  $('codeBadge').classList.remove('hide'); $('codeBadge').textContent = ROOM;
+  poll();
+}
+async function submitWord() {
+  const inp = $('answer'); if (!inp) return;
+  const word = inp.value.trim(); if (!word) return;
+  mySubmitted = true; inp.disabled = true;
+  const btn = $('sendBtn'); if (btn) btn.disabled = true;
+  const r = await api('submit', { roomId: ROOM, playerId: PID, word });
+  showResult(r.result);
+}
+function showResult(result) {
+  const f = $('result'); if (!f) return;
+  if (result === 'win') { f.className = 'flash win'; f.textContent = '🎉 Punkt für dich!'; }
+  else if (result === 'late') { f.className = 'flash late'; f.textContent = 'Zu spät – jemand war schneller.'; }
+  else if (result === 'invalid') { f.className = 'flash bad'; f.textContent = 'Falscher Anfangsbuchstabe!'; const inp = $('answer'); if (inp) { inp.disabled = false; mySubmitted = false; const b = $('sendBtn'); if (b) b.disabled = false; inp.focus(); } }
+  else if (result === 'closed') { f.className = 'flash late'; f.textContent = 'Runde vorbei.'; }
+  f.classList.remove('hide');
+}
+function renderPlayStage(room, now) {
+  const s = $('playStage');
+  const me = room.players.find(p => p.id === PID);
+  if (room.phase === 'lobby') {
+    s.innerHTML = `<div class="cat">Hallo ${esc(me ? me.name : '')}</div>
+      <p class="muted">Warte auf den Spielstart …</p>`;
+  } else if (room.phase === 'round') {
+    if (lastRound !== room.round) {
+      // neue Runde: Eingabe frisch aufbauen
+      mySubmitted = false;
+      s.innerHTML = `<div class="kick">Runde ${room.round}</div>
+        <div class="cat">${esc(room.category)}</div>
+        <div class="big-letter">${esc(room.letter)}</div>
+        <input type="text" id="answer" autocomplete="off" autocapitalize="off" placeholder="Wort mit ${esc(room.letter)} …" />
+        <div class="row" style="margin-top:10px;justify-content:center">
+          <button id="sendBtn" type="button">Abschicken</button>
+        </div>
+        <div id="result" class="flash hide"></div>`;
+      const inp = $('answer');
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitWord(); });
+      $('sendBtn').addEventListener('click', submitWord);
+      setTimeout(() => inp.focus(), 30);
+    }
+  } else if (room.phase === 'reveal') {
+    const left = Math.max(0, Math.ceil((room.revealUntil - now) / 1000));
+    const mine = room.winnerId === PID;
+    s.innerHTML = `<div class="kick">${mine ? 'Dein Punkt!' : 'Punkt für'}</div>
+      <div class="cat" style="color:var(--accent2)">${esc(room.winnerName)}</div>
+      <div class="winword">«${esc(room.winnerWord)}»</div>
+      <div class="countdown">Nächste Runde in ${left}s</div>`;
+  } else if (room.phase === 'finished') {
+    const w = [...room.players].sort((a, b) => b.score - a.score)[0];
+    const mine = w.id === PID;
+    s.innerHTML = `<div class="kick">${mine ? 'Du gewinnst!' : 'Gewonnen hat'}</div>
+      <div class="big-letter" style="font-size:70px">${mine ? '🏆' : '🎉'}</div>
+      <div class="cat" style="color:var(--accent)">${esc(w.name)}</div>
+      <p class="muted">${w.score} Punkte</p>`;
+  }
+}
+
+/* ---------------- POLL LOOP ---------------- */
+async function poll() {
+  clearTimeout(pollTimer);
+  let interval = 950;
+  try {
+    const { room, now } = await api('state?roomId=' + ROOM);
+    if (room && !room.error) {
+      const target = room.target;
+      // Auto-Advance: jeder Client darf nach Reveal-Ende anstossen (serverseitig idempotent)
+      if (room.phase === 'reveal' && room.revealUntil && now >= room.revealUntil) {
+        api('start', { roomId: ROOM, auto: true });
+      }
+      if (HOSTKEY) {
+        $('hostTarget').textContent = 'bis ' + target;
+        renderScores($('hostScores'), room.players);
+        if (room.phase === 'lobby') buildJoinLinks(room.players);
+        $('hostJoinCard').classList.toggle('hide', room.phase !== 'lobby');
+        renderHostStage(room, now);
+      } else {
+        $('playTarget').textContent = 'bis ' + target;
+        renderScores($('playScores'), room.players);
+        renderPlayStage(room, now);
+      }
+      lastPhase = room.phase; lastRound = room.round;
+      interval = (room.phase === 'round') ? 850 : 1400;
+    }
+  } catch (e) { /* still poll */ }
+  pollTimer = setTimeout(poll, interval);
+}
+
+/* ---------------- ROUTER ---------------- */
+if (ROOM && HOSTKEY) showHost();
+else if (ROOM && PID) showPlayer();
+else buildNameInputs(5);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+</script>
+</body>
+</html>
