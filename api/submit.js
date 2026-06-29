@@ -21,13 +21,13 @@ module.exports = async (req, res) => {
 
   const fresh = await getRoom(roomId);
   const pl = fresh.players.find((p) => p.id === playerId);
-  pl.score += 1;
+  // Punkt wird NICHT automatisch vergeben – Schiedsrichter gibt ihn frei.
   fresh.phase = 'reveal';
   fresh.winnerId = playerId;
   fresh.winnerName = pl.name;
   fresh.winnerWord = String(word).trim();
-  fresh.revealUntil = Date.now() + 3500;
-  if (pl.score >= fresh.target) fresh.phase = 'finished';
+  fresh.awarded = false;       // Punkt noch offen
+  fresh.revealUntil = null;    // kein Auto-Weiter mehr
   await saveRoom(fresh);
   res.json({ result: 'win' });
 };
